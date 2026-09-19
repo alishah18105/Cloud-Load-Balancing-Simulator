@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from services.generator import SimulationGenerator
+from services.metrics import SimulationMetrics
 
 from algorithms.round_robin import RoundRobin
 from algorithms.least_load import LeastLoad
@@ -13,6 +14,7 @@ class SimulationService:
 
     def __init__(self):
         self.generator = SimulationGenerator()
+        self.metrics = SimulationMetrics()
 
     def run_simulation(
         self,
@@ -25,6 +27,7 @@ class SimulationService:
         # Generate one common scenario.
         # The same scenario is used by every algorithm
         # in comparison mode.
+
         servers = self.generator.generate_servers(
             number_of_servers,
             server_type
@@ -42,6 +45,7 @@ class SimulationService:
             return self._run_all_algorithms(
                 servers,
                 requests,
+                server_type,
                 workload_type
             )
 
@@ -59,6 +63,7 @@ class SimulationService:
             algorithm,
             servers,
             requests,
+            server_type,
             workload_type
         )
 
@@ -66,6 +71,7 @@ class SimulationService:
         self,
         servers,
         requests,
+        server_type,
         workload_type
     ):
 
@@ -78,6 +84,9 @@ class SimulationService:
         ]
 
         results = {}
+
+        # Common initial server configuration.
+        # This is shared by all algorithms.
         initial_servers = []
 
         for server in servers:
@@ -85,13 +94,13 @@ class SimulationService:
             initial_servers.append({
                 "server_id": server.server_id,
                 "capacity": server.capacity,
-                "processing_power": server.processing_power,
-                "initial_load": server.current_load
+                "processing_power": server.processing_power
             })
 
         for algorithm_name in algorithms:
 
-            # Every algorithm gets its own independent copy.
+            # Every algorithm receives an independent copy
+            # of the exact same scenario.
             algorithm_servers = deepcopy(servers)
             algorithm_requests = deepcopy(requests)
 
@@ -108,15 +117,22 @@ class SimulationService:
                 algorithm_name,
                 algorithm_servers,
                 algorithm_requests,
+                server_type,
                 workload_type
             )
 
         return {
             "mode": "comparison",
-            "number_of_servers": len(servers),
-            "number_of_requests": len(requests),
-            "workload_type": workload_type,
+
+            "configuration": {
+                "number_of_servers": len(servers),
+                "number_of_requests": len(requests),
+                "server_type": server_type,
+                "workload_type": workload_type
+            },
+
             "initial_servers": initial_servers,
+
             "results": results
         }
 
@@ -142,6 +158,7 @@ class SimulationService:
         algorithm,
         servers,
         requests,
+        server_type,
         workload_type
     ):
 
@@ -153,11 +170,16 @@ class SimulationService:
                 "server_id": server.server_id,
                 "capacity": server.capacity,
                 "processing_power": server.processing_power,
-                "current_load": server.current_load,
-                "load_percentage": round(
+
+                "initial_load": 0,
+
+                "final_load": server.current_load,
+
+                "utilization": round(
                     server.get_load_percentage(),
                     2
                 ),
+
                 "assigned_requests": [
                     request.request_id
                     for request in server.assigned_requests
@@ -194,34 +216,97 @@ class SimulationService:
                 )
             })
 
+        # Calculate additional simulation metrics.
+        metrics = self.metrics.calculate_metrics(
+            servers,
+            requests
+        )
+
         return {
             "algorithm": algorithm,
-            "number_of_servers": len(servers),
-            "number_of_requests": len(requests),
-            "workload_type": workload_type,
 
-            "requests_sent": len(requests),
-            "requests_accepted": accepted_requests,
-            "requests_rejected": rejected_requests,
+            "configuration": {
+                "number_of_servers": len(servers),
+                "number_of_requests": len(requests),
+                "server_type": server_type,
+                "workload_type": workload_type
+            },
 
-            "acceptance_rate": round(
-                (
-                    accepted_requests / len(requests) * 100
+            "summary": {
+                "requests_sent": len(requests),
+
+                "requests_accepted": accepted_requests,
+
+                "requests_rejected": rejected_requests,
+
+                "acceptance_rate": round(
+                    (
+                        accepted_requests
+                        / len(requests)
+                        * 100
+                    )
+                    if requests
+                    else 0,
+                    2
+                ),
+
+                "rejection_rate": round(
+                    (
+                        rejected_requests
+                        / len(requests)
+                        * 100
+                    )
+                    if requests
+                    else 0,
+                    2
                 )
-                if requests
-                else 0,
-                2
-            ),
+            },
 
-            "rejection_rate": round(
-                (
-                    rejected_requests / len(requests) * 100
-                )
-                if requests
-                else 0,
-                2
-            ),
+            "metrics": metrics,
+
+            "algorithm_information":
+                self._get_algorithm_information(
+                    algorithm
+                ),
 
             "servers": server_results,
+
             "requests": request_results
         }
+
+    def _get_algorithm_information(self, algorithm):
+
+        information = {
+
+            "round_robin": {
+                "approach": "Sequential distribution",
+                "priority": False,
+                "processing_power": False
+            },
+
+            "least_load": {
+                "approach": "Greedy load-based distribution",
+                "priority": False,
+                "processing_power": False
+            },
+
+            "weighted_round_robin": {
+                "approach": "Weighted sequential distribution",
+                "priority": False,
+                "processing_power": True
+            },
+
+            "priority_based": {
+                "approach": "Priority-based greedy distribution",
+                "priority": True,
+                "processing_power": False
+            },
+
+            "genetic_algorithm": {
+                "approach": "Genetic optimization",
+                "priority": False,
+                "processing_power": False
+            }
+        }
+
+        return information[algorithm]
