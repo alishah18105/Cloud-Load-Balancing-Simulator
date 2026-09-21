@@ -23,11 +23,10 @@ backend/
 ├── app.py
 │
 ├── algorithms/
-│   ├── __init__.py
 │   ├── round_robin.py
 │   ├── least_load.py
-│   ├── priority.py
-│   ├── weighted_greedy.py
+│   ├── weighted_round_robin.py
+│   ├── priority_based.py
 │   └── genetic_algorithm.py
 │
 ├── models/
@@ -36,17 +35,19 @@ backend/
 │   └── server.py
 │
 ├── routes/
-│   ├── __init__.py
 │   └── simulation_routes.py
 │
 ├── services/
 │   ├── __init__.py
 │   ├── generator.py
 │   ├── metrics.py
-│   └── simulation.py
+│   ├── simulation.py
+│   └── timeline.py
 │
 ├── tests/
-│   └── test_simulation.py
+│   ├── __init__.py
+│   ├── test_simulation.py
+│   └── test_timeline.py
 │
 ├── requirements.txt
 │
@@ -82,13 +83,13 @@ Distributes requests sequentially across servers.
 
 Uses a **Greedy approach** and assigns each request to the currently least-loaded suitable server.
 
-#### `priority.py`
+#### `weighted_round_robin.py`
 
-Processes requests according to their priority, assigning higher-priority requests first while respecting server capacity.
+Distributes requests sequentially, but gives stronger servers more turns. Each server is repeated in the rotation `max(1, round(processing_power))` times, so a server with power `4.0` appears four times for every one appearance of a server with power `1.0`. Like Round Robin, it falls back to the next server in the rotation when the chosen one has no capacity left. This is useful for heterogeneous servers.
 
-#### `weighted_greedy.py`
+#### `priority_based.py`
 
-Uses server processing capability/weight when selecting a suitable server. This is useful for heterogeneous servers.
+Sorts requests by priority, highest first, then assigns each one to the least-utilized server that still has room for it.
 
 #### `genetic_algorithm.py`
 
@@ -110,38 +111,40 @@ A server contains information such as:
 * `assigned_requests`
 * `current_load`
 
+The `Server` class itself defaults to `capacity = 100` and `processing_power = 1.0`, but the simulation never relies on those defaults. `services/generator.py` always sets both values explicitly according to the server type below.
+
 ### Server Types
 
 #### Homogeneous
 
 All servers have the same configuration.
 
-Default capacity:
+Capacity:
 
 ```text
-100
+1000
 ```
 
-Default processing power:
+Processing power:
 
 ```text
-1.0
+2.0
 ```
 
 #### Heterogeneous
 
-Servers can have different capacities and processing powers.
+Each server independently receives a random capacity and a random processing power. The two are chosen separately, so any capacity can be paired with any processing power.
 
-Possible capacities include:
+Possible capacities:
 
 ```text
-80, 100, 120, 150, 200
+800, 1000, 1200, 1500, 2000
 ```
 
-Possible processing powers include:
+Possible processing powers:
 
 ```text
-0.8, 1.0, 1.2, 1.5, 2.0
+1.0, 1.5, 2.0, 3.0, 4.0
 ```
 
 ---
@@ -209,6 +212,14 @@ It coordinates:
 
 ---
 
+### `services/timeline.py`
+
+Discrete-event version of the simulation, used by the **Live Flow** view in the
+frontend. Requests arrive on a clock, servers work through their queues, and a
+finished request releases its workload. See section 10a.
+
+---
+
 ### `services/metrics.py`
 
 Calculates simulation metrics such as:
@@ -240,15 +251,15 @@ Therefore, the backend does **not allow a server to exceed its capacity**.
 Example:
 
 ```text
-Server Capacity = 100
-Current Load    = 80
+Server Capacity  = 1000
+Current Load     = 980
 Request Workload = 30
 ```
 
 Since:
 
 ```text
-80 + 30 = 110
+980 + 30 = 1010
 ```
 
 the request is rejected for that server.
@@ -259,13 +270,13 @@ the request is rejected for that server.
 
 The backend currently supports:
 
-| Algorithm         | Main Approach                       |
-| ----------------- | ----------------------------------- |
-| Round Robin       | Sequential distribution             |
-| Least Load        | Greedy load-based selection         |
-| Priority          | Priority-based request ordering     |
-| Weighted Greedy   | Load + server processing capability |
-| Genetic Algorithm | Optimization-based assignment       |
+| Algorithm            | Key                    | Main Approach                                        |
+| -------------------- | ---------------------- | ---------------------------------------------------- |
+| Round Robin          | `round_robin`          | Sequential distribution                              |
+| Least Load           | `least_load`           | Greedy load-based selection                          |
+| Weighted Round Robin | `weighted_round_robin` | Sequential distribution weighted by processing power |
+| Priority Based       | `priority_based`       | Highest-priority requests first, then least-utilized |
+| Genetic Algorithm    | `genetic_algorithm`    | Optimization-based assignment                        |
 
 All algorithms must respect the server capacity constraint.
 
@@ -336,8 +347,8 @@ Supported algorithm values:
 ```text
 round_robin
 least_load
-priority
-weighted_greedy
+weighted_round_robin
+priority_based
 genetic_algorithm
 all
 ```
@@ -364,6 +375,98 @@ Results include information about:
 For comparison mode, results for all algorithms are returned together.
 
 ---
+
+## 10a. Timeline API (Discrete-Event Simulation)
+
+### Run Timeline Simulation
+
+```http
+POST /api/simulate/timeline
+```
+
+This endpoint answers a **different question** from `/api/simulate`.
+
+| | `/api/simulate` | `/api/simulate/timeline` |
+| --- | --- | --- |
+| Question | If everything arrives at once, where does it land? | As requests arrive over time and servers work through them, what happens? |
+| Time | none | discrete-event clock |
+| Completion | never | a request finishes and **releases** its workload |
+| Capacity means | total workload ever accepted | **concurrent** workload (queued + in service) |
+| Utilization means | share of capacity used | share of **time busy** |
+| Modes | single or `all` | single algorithm only |
+
+Because a finished request frees capacity here, the two endpoints report
+different acceptance rates for the same configuration. That is intended —
+neither is wrong, they model different things.
+
+### Request Body
+
+```json
+{
+    "algorithm": "least_load",
+    "number_of_requests": 1500,
+    "number_of_servers": 20,
+    "server_type": "heterogeneous",
+    "workload_type": "medium",
+    "arrival_rate": 2
+}
+```
+
+`arrival_rate` is in requests per second. **`0` means a burst** — every request
+arrives at once.
+
+### Service Model
+
+The service model is the same one `services/metrics.py` already assumes: a
+server works through its queue **one request at a time**, and a request of
+workload `w` occupies a server of power `p` for `w / p` time units.
+
+It follows that the pool can sustain:
+
+```text
+capacity_rate = total_processing_power / mean_workload   requests per second
+```
+
+Arrival rates below that are absorbed; above it, queues build and then
+requests are refused. This value is returned in the `system` block.
+
+### Per-Algorithm Behaviour
+
+| Algorithm | Online behaviour |
+| --- | --- |
+| Round Robin | Next server in rotation, with the same capacity fallback scan |
+| Least Load | Least loaded server that still has room |
+| Weighted Round Robin | Rotation over weighted slots |
+| Priority Based | Placement is least-load; each **server serves its queue highest priority first** |
+| Genetic Algorithm | Has no online form — its batch solution is computed up front and replayed as requests arrive |
+
+### Response
+
+```text
+mode          "timeline"
+servers       id, capacity, processing_power
+system        total_processing_power, mean_workload, capacity_rate, per_server_rate
+requests      per request: arrival, server, start, end, status
+samples       point-in-time snapshots on a fixed grid: load, in_service, completed, rejected
+summary       accepted / rejected / rates
+metrics       utilization, imbalance, waiting, response, throughput, makespan
+duration      makespan of the run
+```
+
+`samples` are **point-in-time** snapshots, not window aggregates — a request
+counts only if it is in the server at that exact instant. Aggregating over a
+window would double count one request finishing and another starting inside
+the same window, and could report a load above the server's capacity.
+
+### Tests
+
+```bash
+python -m unittest tests.test_timeline
+```
+
+These assert the invariants: a server never serves two requests at once,
+capacity is never exceeded, service time equals `workload / processing_power`,
+and no sample ever exceeds capacity.
 
 ## 11. Running the Backend
 

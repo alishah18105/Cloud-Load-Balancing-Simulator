@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/*
+  Design tokens. Chart colors come from a validated categorical palette
+  (5 slots, one per algorithm). Both light and dark steps were checked for
+  colorblind separation against their own surface, so the dark values are a
+  deliberate re-step rather than an automatic flip of the light ones.
+*/
+:root {
+  color-scheme: light;
+
+  --surface-0: #f4f3f0;
+  --surface-1: #fcfcfb;
+  --surface-2: #eceae5;
+  --border: #dcd9d2;
+
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #77756e;
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+
+  --good: #1baf7a;
+  --critical: #e34948;
+
+  /* Sequential blue ramp, used for utilization magnitude. */
+  --seq-200: #9ec5f4;
+  --seq-350: #5598e7;
+  --seq-450: #2a78d6;
+  --seq-600: #184f95;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #252524;
+    --border: #383835;
+
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #91908a;
+
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+
+    --good: #199e70;
+    --critical: #e66767;
+
+    --seq-200: #184f95;
+    --seq-350: #256abf;
+    --seq-450: #3987e5;
+    --seq-600: #86b6ef;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --surface-2: #252524;
+  --border: #383835;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #91908a;
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+
+  --good: #199e70;
+  --critical: #e66767;
+
+  --seq-200: #184f95;
+  --seq-350: #256abf;
+  --seq-450: #3987e5;
+  --seq-600: #86b6ef;
+}
+
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text-primary);
+  --color-ink-soft: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-good: var(--good);
+  --color-critical: var(--critical);
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Tabular figures keep metric numbers from jittering as they animate. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

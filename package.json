@@ -1,0 +1,14 @@
+{
+  "name": "load-balancer-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Load Balancing Simulator — Flask backend + React frontend",
+  "scripts": {
+    "dev": "concurrently --kill-others --names BACKEND,FRONTEND --prefix-colors blue,green \"node scripts/dev-backend.js\" \"node scripts/dev-frontend.js\"",
+    "dev:backend": "node scripts/dev-backend.js",
+    "dev:frontend": "node scripts/dev-frontend.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
