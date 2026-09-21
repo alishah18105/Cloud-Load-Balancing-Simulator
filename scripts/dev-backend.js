@@ -26,14 +26,14 @@ function log(message) {
   console.log(`[backend] ${message}`)
 }
 
+// `py` and `python` are real .exe files, so they can be spawned directly. Adding
+// `shell: true` together with an args array is what makes Node print a DEP0190
+// deprecation warning, so it is deliberately not used here.
 function findSystemPython() {
   const candidates = isWindows ? ['py', 'python'] : ['python3', 'python']
 
   for (const candidate of candidates) {
-    const check = spawnSync(candidate, ['--version'], {
-      stdio: 'ignore',
-      shell: isWindows,
-    })
+    const check = spawnSync(candidate, ['--version'], { stdio: 'ignore' })
 
     if (check.status === 0) return candidate
   }
@@ -56,7 +56,6 @@ if (!fs.existsSync(venvPython)) {
   const create = spawnSync(systemPython, ['-m', 'venv', '.venv'], {
     cwd: backendDir,
     stdio: 'inherit',
-    shell: isWindows,
   })
 
   if (create.status !== 0) {
