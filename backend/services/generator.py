@@ -13,7 +13,7 @@ class SimulationGenerator:
 
             if server_type.lower() == "homogeneous":
                 capacity = 1000
-                processing_power = 2.0
+                processing_power = 4.0
 
             elif server_type.lower() == "heterogeneous":
                 capacity = random.choice(
@@ -21,7 +21,7 @@ class SimulationGenerator:
                 )
 
                 processing_power = random.choice(
-                    [1.0, 1.5, 2.0, 3.0, 4.0]
+                    [3.0, 4.0, 5.0, 6.0, 7.0]
                 )
 
             else:
