@@ -1,5 +1,3 @@
-// Shared hover layer. An on-screen chart is interactive by default, so every
-// plotted form here gets a tooltip rather than relying on axis labels alone.
 export default function ChartTooltip({ active, payload, label, rows }) {
   if (!active || !payload?.length) return null
 
