@@ -6,7 +6,7 @@ export async function runSimulation(config) {
   let response
 
   try {
-    response = await fetch('${API_URL}/api/simulate', {
+    response = await fetch(`${API_URL}/api/simulate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -58,7 +58,7 @@ export async function runTimeline(config, arrivalRate) {
   let response
 
   try {
-    response = await fetch('${API_URL}/api/simulate/timeline', {
+    response = await fetch(`${API_URL}/api/simulate/timeline`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
