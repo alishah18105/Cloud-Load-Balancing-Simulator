@@ -1,56 +1,116 @@
 # Cloud Load Balancing Simulator
 
-A Design & Analysis of Algorithms project. It simulates five load-balancing
-strategies — Round Robin, Least Load, Weighted Round Robin, Priority Based and a
-Genetic Algorithm — under a hard server capacity constraint, and presents the
-results visually.
+A web-based **Cloud Load Balancing Simulator** that demonstrates how different load-balancing algorithms distribute requests across multiple servers.
 
-| Folder | What it is |
-| --- | --- |
-| [`backend/`](backend/README.md) | Flask simulation engine and REST API |
-| [`frontend/`](frontend/README.md) | React interface: dashboard, live request flow, algorithm comparison |
+The project provides an interactive interface to configure simulations, visualize server loads, compare algorithms, and observe request flow through a simulated cloud environment.
 
----
+## 🌐 Live Demo
 
-## Running it
+**Frontend:**
+https://cloud-load-balancing-simulator.vercel.app/
 
-You need **Node.js** and **Python 3.10+** installed. Then, from this folder:
+**Backend API:**
+https://cloud-load-balancing-simulator.onrender.com
 
-```bash
-npm install     # once — installs the tool that runs both servers together
-npm run dev     # every time
+## 🚀 Features
+
+* Simulate multiple load-balancing algorithms
+* Compare algorithm performance
+* Visualize server utilization and request distribution
+* Interactive live request-flow simulation
+* Support for different server capacities and workloads
+* Metrics for accepted/rejected requests, utilization, load imbalance, and performance
+* Responsive React-based interface
+
+## 🧠 Algorithms
+
+The simulator currently supports:
+
+* Round Robin
+* Least Load
+* Weighted Round Robin
+* Priority Based
+* Genetic Algorithm
+
+## 🛠️ Technology Stack
+
+**Frontend**
+
+* React
+* Vite
+* Tailwind CSS
+* Recharts
+
+**Backend**
+
+* Python
+* Flask
+* Flask-CORS
+
+**Tools**
+
+* Git & GitHub
+* Node.js
+* REST API
+
+## 🏗️ Project Structure
+
+```text
+Cloud-Load-Balancing-Simulator/
+│
+├── backend/        # Flask API, simulations & algorithms
+│   └── README.md
+│
+├── frontend/       # React interface & visualizations
+│   └── README.md
+│
+├── scripts/        # Development scripts
+│
+├── package.json
+└── README.md
 ```
 
-That single `npm run dev` starts both servers:
+Detailed documentation for each part of the project is available here:
 
-| Server | URL |
-| --- | --- |
-| Frontend (open this one) | http://localhost:5173 |
-| Backend API | http://127.0.0.1:5000 |
+* [Frontend Documentation](./frontend/README.md)
+* [Backend Documentation](./backend/README.md)
 
-Press **Ctrl+C** once to stop both.
+## ⚙️ Run Locally
 
-### First run
-
-On a fresh clone, `npm run dev` sets everything else up for you:
-
-* creates `backend/.venv` and installs `backend/requirements.txt`
-* runs `npm install` inside `frontend/`
-
-This happens only when something is missing, so later runs start straight away.
-
-### Running one side on its own
+Clone the repository:
 
 ```bash
-npm run dev:backend
-npm run dev:frontend
+git clone https://github.com/alishah18105/Cloud-Load-Balancing-Simulator.git
+cd Cloud-Load-Balancing-Simulator
 ```
 
-### Troubleshooting
+Install dependencies:
 
-* **"address already in use"** — an earlier run is still holding port 5000 or
-  5173. Close that terminal, or end the leftover `python` / `node` process.
-* **"Could not find Python on PATH"** — install Python 3.10 or newer and make
-  sure it is on your PATH, then run `npm run dev` again.
-* **The page loads but every simulation fails** — the backend did not start.
-  Look at the `[BACKEND]` lines in the terminal for the reason.
+```bash
+npm install
+```
+
+Start the frontend and backend:
+
+```bash
+npm run dev
+```
+
+Frontend:
+
+```text
+http://localhost:5173
+```
+
+Backend:
+
+```text
+http://127.0.0.1:5000
+```
+
+## 📌 Project
+
+**Cloud Load Balancing Simulator**
+Design & Analysis of Algorithms Project
+
+[GitHub Repository](https://github.com/alishah18105/Cloud-Load-Balancing-Simulator)
